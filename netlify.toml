@@ -1,0 +1,57 @@
+# Bloom & Beyond — Netlify configuration
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Dev server: `netlify dev` runs Vite + Netlify Functions together.
+[dev]
+  command = "vite"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = false
+
+# Functions are bundled with esbuild (TypeScript supported out of the box).
+[functions]
+  node_bundler = "esbuild"
+
+# Security & performance headers for the SPA.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# SPA deep links — deliberately NOT a greedy "/*" rewrite.
+# A catch-all would also rewrite Vite's dev URLs (/src/*, /@vite/*) to
+# index.html while running `netlify dev`, which breaks the local dev server.
+# Every real route is listed here; any other unknown URL falls back to
+# dist/404.html in production (see scripts/postbuild.mjs), which still boots
+# the React app.
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/order-success/*"
+  to = "/index.html"
+  status = 200
+
